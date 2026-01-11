@@ -14,15 +14,20 @@ with open("logistic_model.pkl", "rb") as f:
 def home():
     return "API is running"
 
+
 @app.route("/predict", methods=["POST"])
 def predict():
     try:
         data = request.get_json()
         features = data["features"]
 
-        X = np.array(features, dtype=float).reshape(1, -1)
-        prediction = int(model.predict(X)[0])
+        # frontend order: [sex, pclass, age, fare]
+        sex, pclass, age, fare = features
 
+        # model training order: [pclass, sex, age, fare]
+        X = np.array([[pclass, sex, age, fare]], dtype=float)
+
+        prediction = int(model.predict(X)[0])
         return jsonify({"prediction": prediction})
 
     except Exception as e:
@@ -31,3 +36,4 @@ def predict():
 
 if __name__ == "__main__":
     app.run()
+
