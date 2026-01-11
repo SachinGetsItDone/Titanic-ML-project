@@ -1,28 +1,33 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import pickle
 import numpy as np
 
 app = Flask(__name__)
+CORS(app)
 
 # Load model
-model = pickle.load(open("logistic_model.pkl", "rb"))
+with open("logistic_model.pkl", "rb") as f:
+    model = pickle.load(f)
 
 @app.route("/")
 def home():
-    return "ML API is running"
+    return "API is running"
 
 @app.route("/predict", methods=["POST"])
 def predict():
-    data = request.json["features"]
-    X = np.array(data).reshape(1, -1)
+    try:
+        data = request.get_json()
+        features = data["features"]
 
-    prediction = int(model.predict(X)[0])
-    probability = model.predict_proba(X).tolist()
+        X = np.array(features, dtype=float).reshape(1, -1)
+        prediction = int(model.predict(X)[0])
 
-    return jsonify({
-        "prediction": prediction,
-        "probability": probability
-    })
+        return jsonify({"prediction": prediction})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run()
